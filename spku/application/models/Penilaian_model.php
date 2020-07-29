@@ -107,15 +107,15 @@ return $query;
     public function max1(){
      
       $query = "SELECT `penilaian`.*,.`kriteria`.`kriteria`,`siswa`.`nama`,
-       CASE 
-  WHEN jenis = 'Benefit' then MAX(nilai)
-  else 0
-  end as MX
+      CASE 
+            WHEN jenis = 'Benefit' then MAX(nilai)
+            else 0
+      end as MX
       FROM `penilaian`
-      join `siswa`
-      on `penilaian`.`id_siswa`=`siswa`.`id_siswa`
+        join `siswa`
+          on `penilaian`.`id_siswa`=`siswa`.`id_siswa`
       join `kriteria`
-      on `penilaian`.`id_kriteria`=`kriteria`.`id_kriteria`
+        on `penilaian`.`id_kriteria`=`kriteria`.`id_kriteria`
       where jenis ='Benefit'
       GROUP BY kriteria
       order by id_siswa DESC";
@@ -180,14 +180,14 @@ return $query;
 
 }
 
-public function max3(){
+public function max3awal(){
      
-  $query2 = "SELECT `penilaian`.*,.`kriteria`.`kriteria`,`kriteria`.`jenis`,`siswa`.`nama`,`detail_jk`.`bobot`,`jurusan`.`jurusan`,
-  CASE 
-  WHEN jenis = 'Cost' then (MIN(nilai)/nilai)*bobot
-  WHEN jenis = 'Benefit' then (nilai/MAX(nilai))*bobot 
-  else 0
-  end as N3
+  $query2 = "SELECT `penilaian`.*,.`kriteria`.`kriteria`,`kriteria`.`jenis`,`siswa`.`nama`,`detail_jk`.`bobot`,`jurusan`.`jurusan`, MIN(`penilaian`.`nilai`) as MX
+  -- CASE 
+  -- WHEN jenis = 'Cost' then 
+  -- -- WHEN jenis = 'Benefit' then MAX(nilai)
+  -- else 0
+  -- end as N3
   FROM `penilaian`
   join `siswa`
   on `penilaian`.`id_siswa`=`siswa`.`id_siswa`
@@ -198,36 +198,87 @@ public function max3(){
   join `jurusan`
   on `detail_jk`.`id_jurusan`=`jurusan`.`id_jurusan`
  GROUP BY id_nilai,id_detail,id_siswa,kriteria
+
+  -- INNER JOIN (SELECT kriteria,kriteria.id_kriteria,MAX(nilai) AS MX from kriteria join penilaian on
+    --   penilaian.id_kriteria = kriteria.id_kriteria
+    --   where jenis ='benefit' group by kriteria.id_kriteria ) as kriteria1 
+    --   ON penilaian.id_kriteria = kriteria1.id_kriteria
+    -- INNER JOIN (SELECT kriteria,kriteria.id_kriteria,MIN(nilai) AS MN from kriteria join penilaian on
+    --   penilaian.id_kriteria = kriteria.id_kriteria
+    --   where jenis ='Cost' group by kriteria.id_kriteria ) as kriteria2 
+    --   ON penilaian.id_kriteria = kriteria1.id_kriteria
  ";
+  
   return $this->db->query($query2);
-
-
-
 }
+
+
+public function max3(){
+     
+  $query = "SELECT siswa.nama,jurusan.jurusan,kriteria.kriteria,detail_jk.bobot,nilai,kriteria.jenis,MN,MX,
+    CASE 
+          WHEN jenis = 'Cost' THEN (MN/nilai)*bobot
+          WHEN jenis = 'Benefit' THEN (nilai/MX)*bobot
+          ELSE NULL
+          END AS N3
+    FROM penilaian 
+    JOIN(
+      SELECT kriteria.id_kriteria,
+        CASE WHEN jenis = 'Benefit' THEN MAX(nilai) ELSE NULL END AS MX,
+        CASE WHEN jenis = 'Cost' THEN MIN(nilai) ELSE NULL END AS MN
+      FROM kriteria 
+      JOIN penilaian 
+        ON penilaian.id_kriteria = kriteria.id_kriteria
+      GROUP BY kriteria.id_kriteria
+      ) AS x
+      ON penilaian.id_kriteria = x.id_kriteria
+    JOIN kriteria
+      ON penilaian.id_kriteria = kriteria.id_kriteria
+    JOIN siswa
+      ON penilaian.id_siswa = siswa.id_siswa
+    JOIN detail_jk
+      ON detail_jk.id_kriteria = kriteria.id_kriteria
+    JOIN jurusan
+      ON jurusan.id_jurusan = detail_jk.id_jurusan
+    GROUP BY siswa.nama, jurusan.jurusan, kriteria.kriteria
+    ORDER BY siswa.nama, jurusan.jurusan, kriteria.kriteria ASC
+ ";
+
+  return $this->db->query($query);
+}
+
 public function final1(){
-$query = "SELECT  total_max,total_min
-FROM PENILAIAN inner join
-(
-  SELECT c.id_kriteria, MAX(nilai) total_max 
-  FROM kriteria as c
-  INNER JOIN penilaian ON c.id_kriteria = penilaian.id_kriteria
-  where jenis='Benefit' 
-  GROUP BY c.id_kriteria
-) a
-JOIN (
-  SELECT k.id_kriteria, MIN(nilai) total_min 
-  FROM kriteria as k
-  INNER JOIN penilaian ON k.id_kriteria = penilaian.id_kriteria
-  where jenis ='Cost' 
-  GROUP BY k.id_kriteria
-) b
-ON penilaian.id_kriteria = c.id_kriteria 
-INNER JOIN
- ON c.id_kriteria=k.id_kriteria
-ORDER BY c.id_kriteria";
+$query = "SELECT DISTINCT siswa.nama,jurusan.jurusan,kriteria.kriteria,detail_jk.bobot,nilai,kriteria.jenis,MN,MX,
+CASE 
+      WHEN jenis = 'Cost' THEN (MN/nilai)*bobot
+      WHEN jenis = 'Benefit' THEN (nilai/MX)*bobot
+      ELSE NULL
+      END AS N3,
+(SELECT SUM(N3) FROM penilaian JOIN kriteria ON penilaian.id_kriteria = kriteria.id_kriteria
+GROUP BY kritertia.kriteria) AS TOTAL
+FROM penilaian 
+JOIN(
+  SELECT kriteria.id_kriteria,
+    CASE WHEN jenis = 'Benefit' THEN MAX(nilai) ELSE NULL END AS MX,
+    CASE WHEN jenis = 'Cost' THEN MIN(nilai) ELSE NULL END AS MN
+  FROM kriteria 
+  JOIN penilaian 
+    ON penilaian.id_kriteria = kriteria.id_kriteria
+  GROUP BY kriteria.id_kriteria
+  ) AS x
+  ON penilaian.id_kriteria = x.id_kriteria
+JOIN kriteria
+  ON penilaian.id_kriteria = kriteria.id_kriteria
+JOIN siswa
+  ON penilaian.id_siswa = siswa.id_siswa
+JOIN detail_jk
+  ON detail_jk.id_kriteria = kriteria.id_kriteria
+JOIN jurusan
+  ON jurusan.id_jurusan = detail_jk.id_jurusan
+GROUP BY siswa.nama, jurusan.jurusan
+ORDER BY siswa.nama, jurusan.jurusan, kriteria.kriteria ASC";
 
 return $this->db->query($query);
 
 }
-
 }
