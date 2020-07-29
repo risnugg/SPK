@@ -249,11 +249,6 @@ public function max3(){
 
 public function final1(){
 $query = "SELECT DISTINCT siswa.nama,jurusan.jurusan,kriteria.kriteria,detail_jk.bobot,nilai,kriteria.jenis,MN,MX,
-CASE 
-      WHEN jenis = 'Cost' THEN (MN/nilai)*bobot
-      WHEN jenis = 'Benefit' THEN (nilai/MX)*bobot
-      ELSE NULL
-      END AS N3
 FROM penilaian
   ON penilaian.id_kriteria = x.id_kriteria
 JOIN kriteria
