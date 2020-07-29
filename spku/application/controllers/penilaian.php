@@ -116,15 +116,20 @@ class Penilaian extends CI_Controller
         $data['min1'] = $this->min1->min1();
         $this->load->model('Penilaian_model', 'min2');
         $data['min2'] = $this->min2->min2();
-      
+        $this->load->model('Penilaian_model', 'final1');
+        $data['final1'] = $this->final1->final1();
+
         $data['nilai'] =$this->db->get('penilaian')->result_array();
             $this->load->view('templates/user/header.php', $data);
             $this->load->view('templates/user/sidebar.php', $data);
             $this->load->view('templates/user/topbar.php', $data);
             $this->load->view('penilaian/saw.php', $data);
             $this->load->view('templates/user/footer.php');
-      
-  
-           
         }
+
+        // public function total($jurusan){
+        //     $this->load->model('Penilaian_model', 'total');
+        //     $this->Penilaian_model->total($jurusan);
+        // }
+
 }   

@@ -242,13 +242,29 @@ public function max3(){
       ON jurusan.id_jurusan = detail_jk.id_jurusan
     GROUP BY siswa.nama, jurusan.jurusan, kriteria.kriteria
     ORDER BY siswa.nama, jurusan.jurusan, kriteria.kriteria ASC
+    
  ";
 
   return $this->db->query($query);
 }
 
 public function final1(){
-$query = "SELECT DISTINCT siswa.nama,jurusan.jurusan,kriteria.kriteria,detail_jk.bobot,nilai,kriteria.jenis,MN,MX
+$query = "SELECT DISTINCT siswa.nama,jurusan.jurusan,kriteria.kriteria,detail_jk.bobot,nilai,kriteria.jenis,MN,MX,
+CASE 
+      WHEN jenis = 'Cost' THEN (MN/nilai)*bobot
+      WHEN jenis = 'Benefit' THEN (nilai/MX)*bobot
+      ELSE NULL
+      END AS N3
+FROM penilaian 
+JOIN(
+  SELECT kriteria.id_kriteria,
+    CASE WHEN jenis = 'Benefit' THEN MAX(nilai) ELSE NULL END AS MX,
+    CASE WHEN jenis = 'Cost' THEN MIN(nilai) ELSE NULL END AS MN
+  FROM kriteria 
+  JOIN penilaian 
+    ON penilaian.id_kriteria = kriteria.id_kriteria
+  GROUP BY kriteria.id_kriteria
+  ) AS x
   ON penilaian.id_kriteria = x.id_kriteria
 JOIN kriteria
   ON penilaian.id_kriteria = kriteria.id_kriteria
@@ -264,4 +280,38 @@ ORDER BY siswa.nama, jurusan.jurusan, kriteria.kriteria ASC";
 return $this->db->query($query);
 
 }
+// public function total($jurusan){
+//   $query = "SELECT jurusan.jurusan,siswa.siswa,kriteria.kriteria,detail_jk.bobot,nilai,kriteria.jenis,MN,MX,
+//   CASE 
+//         WHEN jenis = 'Cost' THEN (MN/nilai)*bobot
+//         WHEN jenis = 'Benefit' THEN (nilai/MX)*bobot
+//         ELSE NULL
+//         END AS N3
+//   FROM penilaian 
+//   JOIN(
+//     SELECT kriteria.id_kriteria,
+//       CASE WHEN jenis = 'Benefit' THEN MAX(nilai) ELSE NULL END AS MX,
+//       CASE WHEN jenis = 'Cost' THEN MIN(nilai) ELSE NULL END AS MN
+//     FROM kriteria 
+//     JOIN penilaian 
+//       ON penilaian.id_kriteria = kriteria.id_kriteria
+//     GROUP BY kriteria.id_kriteria
+//     ) AS x
+//     ON penilaian.id_kriteria = x.id_kriteria
+//   JOIN kriteria
+//     ON penilaian.id_kriteria = kriteria.id_kriteria
+//   JOIN siswa
+//     ON penilaian.id_siswa = siswa.id_siswa
+//   JOIN detail_jk
+//     ON detail_jk.id_kriteria = kriteria.id_kriteria
+//   JOIN jurusan
+//     ON jurusan.id_jurusan = detail_jk.id_jurusan
+//   WHERE jurusan.jurusan = $jurusan
+//   ";
+  
+//   return $this->db->query($query);
+  
+//   }
+  
+
 }
