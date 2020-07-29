@@ -248,7 +248,7 @@ public function max3(){
 }
 
 public function final1(){
-$query = "SELECT DISTINCT siswa.nama,jurusan.jurusan,kriteria.kriteria,detail_jk.bobot,nilai,kriteria.jenis,MN,MX,
+$query = "SELECT siswa.nama,jurusan.jurusan,kriteria.kriteria,detail_jk.bobot,nilai,kriteria.jenis,MN,MX
 FROM penilaian
   ON penilaian.id_kriteria = x.id_kriteria
 JOIN kriteria
