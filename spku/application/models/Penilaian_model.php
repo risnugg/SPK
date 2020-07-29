@@ -253,19 +253,8 @@ CASE
       WHEN jenis = 'Cost' THEN (MN/nilai)*bobot
       WHEN jenis = 'Benefit' THEN (nilai/MX)*bobot
       ELSE NULL
-      END AS N3,
-(SELECT SUM(N3) FROM penilaian JOIN kriteria ON penilaian.id_kriteria = kriteria.id_kriteria
-GROUP BY kritertia.kriteria) AS TOTAL
-FROM penilaian 
-JOIN(
-  SELECT kriteria.id_kriteria,
-    CASE WHEN jenis = 'Benefit' THEN MAX(nilai) ELSE NULL END AS MX,
-    CASE WHEN jenis = 'Cost' THEN MIN(nilai) ELSE NULL END AS MN
-  FROM kriteria 
-  JOIN penilaian 
-    ON penilaian.id_kriteria = kriteria.id_kriteria
-  GROUP BY kriteria.id_kriteria
-  ) AS x
+      END AS N3
+FROM penilaian
   ON penilaian.id_kriteria = x.id_kriteria
 JOIN kriteria
   ON penilaian.id_kriteria = kriteria.id_kriteria
